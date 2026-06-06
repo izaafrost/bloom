@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#F6F1E9">
+<title>Bloom · Cyklus & Velvære</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bloom">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#F6F1E9; --cream-2:#FBF8F2; --ink:#33312B; --ink-soft:#6B665C; --line:#E7DECF;
+    --shadow:0 14px 40px -18px rgba(80,70,55,.45); --radius:26px;
+    /* aktivt tema (skifter med fasen) */
+    --theme:#7A8B66; --theme-deep:#54684A; --theme-bg1:#e7dcc6; --theme-bg2:#ddccbe; --theme-tint:#FBF8F2; --theme-soft:#EFEAD9;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:'Hanken Grotesk',sans-serif;background:#E5DBC9;color:var(--ink);
+    display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px 12px;
+    background-image:radial-gradient(circle at 20% 10%,#efe6d3,transparent 55%),radial-gradient(circle at 85% 90%,#e3d3c9,transparent 50%);}
+
+  .device{width:393px;max-width:100%;height:852px;max-height:94vh;background:var(--cream);border-radius:54px;padding:13px;
+    box-shadow:0 50px 90px -30px rgba(60,50,40,.55), inset 0 0 0 2px #cdbfa6;position:relative;}
+  .screen{width:100%;height:100%;border-radius:42px;overflow:hidden;position:relative;display:flex;flex-direction:column;
+    background:
+      radial-gradient(135% 50% at 50% -8%, var(--theme-bg1), transparent 62%),
+      radial-gradient(120% 40% at 50% 105%, var(--theme-bg2), transparent 60%),
+      linear-gradient(var(--theme-tint), var(--cream) 30%);
+    transition:background .8s ease;}
+  .notch{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:120px;height:30px;background:#23211d;border-radius:18px;z-index:50;}
+
+  /* Fuldskærm som installeret app / på mobil — ramme kun på store skærme */
+  @media (max-width:560px), (display-mode:standalone){
+    body{padding:0;background:var(--cream);background-image:none;align-items:stretch;}
+    .device{width:100%;height:100vh;height:100dvh;max-height:none;border-radius:0;padding:0;box-shadow:none;}
+    .device::before{display:none;}
+    .screen{border-radius:0;}
+    .notch{display:none;}
+    .scroll{padding-top:max(26px, env(safe-area-inset-top));}
+    .tabbar{padding-bottom:env(safe-area-inset-bottom);height:calc(84px + env(safe-area-inset-bottom));}
+  }
+
+  .scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:58px 20px 110px;scroll-behavior:smooth;}
+  .scroll::-webkit-scrollbar{display:none;}
+  .view[hidden]{display:none;}
+
+  /* Header */
+  .hello{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--theme-deep);font-weight:700;transition:color .8s;}
+  .brand{font-family:'Fraunces',serif;font-size:40px;line-height:1;font-weight:500;letter-spacing:-.02em;margin:4px 0 3px;}
+  .brand em{font-style:italic;color:var(--theme-deep);transition:color .8s;}
+  .tagline{font-size:13.5px;color:var(--ink-soft);margin-bottom:8px;}
+  .date{font-size:13px;color:var(--ink-soft);margin-bottom:18px;text-transform:capitalize;}
+
+  .summary{display:flex;gap:10px;margin-bottom:16px;}
+  .stat{flex:1;background:var(--cream-2);border:1px solid var(--line);border-radius:18px;padding:13px 8px;text-align:center;}
+  .stat b{font-family:'Fraunces',serif;font-size:20px;font-weight:600;display:block;line-height:1.1;color:var(--theme-deep);transition:color .8s;}
+  .stat span{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+
+  .card{background:var(--cream-2);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow);animation:rise .6s both;}
+  @keyframes rise{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+  .card-label{display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--ink-soft);margin-bottom:14px;}
+  .card-label .dot{width:8px;height:8px;border-radius:50%;background:var(--theme);transition:background .8s;}
+
+  /* Cyklus – nu med kraftig fasefarve */
+  .cycle{position:relative;overflow:hidden;border:none;color:#fff;
+    background:linear-gradient(155deg, var(--theme), var(--theme-deep));transition:background .8s;}
+  .cycle::after{content:"";position:absolute;right:-40px;top:-40px;width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,.12);}
+  .cycle .card-label{color:rgba(255,255,255,.85);}
+  .cycle .card-label .dot{background:#fff;}
+  .phase-top{display:flex;align-items:center;justify-content:space-between;gap:14px;position:relative;}
+  .phase-name{font-family:'Fraunces',serif;font-size:26px;font-weight:500;line-height:1.1;}
+  .phase-season{font-size:13.5px;margin-top:3px;font-style:italic;font-family:'Fraunces',serif;opacity:.92;}
+  .phase-emoji{font-size:40px;line-height:1;}
+  .ring{--p:0;width:76px;height:76px;border-radius:50%;flex-shrink:0;
+    background:radial-gradient(closest-side, var(--theme-deep) 75%, transparent 76% 100%), conic-gradient(#fff calc(var(--p)*1%), rgba(255,255,255,.28) 0);
+    display:flex;align-items:center;justify-content:center;position:relative;}
+  .ring b{font-family:'Fraunces',serif;font-size:23px;font-weight:600;line-height:1;color:#fff;}
+  .ring small{font-size:9px;opacity:.8;letter-spacing:.08em;text-transform:uppercase;position:absolute;bottom:15px;color:#fff;}
+  .phase-mid{display:flex;align-items:center;gap:16px;margin:16px 0 4px;position:relative;}
+  .phase-desc{font-size:14px;line-height:1.5;color:rgba(255,255,255,.95);}
+  .setup-btn{margin-top:14px;width:100%;border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.15);color:#fff;padding:11px;border-radius:14px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;position:relative;}
+  .setup-btn:active{transform:scale(.98);background:rgba(255,255,255,.28);}
+
+  /* Mad */
+  .food-intro{font-size:14px;line-height:1.55;margin-bottom:14px;}
+  .food-intro b{color:var(--theme-deep);transition:color .8s;}
+  .food-grid{display:flex;flex-direction:column;gap:10px;}
+  .food-item{display:flex;gap:12px;align-items:flex-start;background:var(--theme-soft);border:1px solid var(--line);border-radius:16px;padding:12px 14px;transition:background .8s;}
+  .food-item .ic{font-size:20px;}
+  .food-item .txt{font-size:13.5px;line-height:1.45;}
+  .food-item .txt b{display:block;font-weight:700;margin-bottom:1px;}
+  .food-item .txt span{color:var(--ink-soft);}
+
+  /* Checklister */
+  .check-row{display:flex;align-items:center;gap:14px;padding:13px 4px;border-bottom:1px solid var(--line);cursor:pointer;}
+  .check-row:last-child{border-bottom:none;}
+  .box{width:26px;height:26px;border-radius:9px;border:2px solid #cdbfa6;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.22s;background:var(--cream-2);}
+  .box svg{width:15px;height:15px;stroke:#fff;stroke-width:3.2;fill:none;stroke-dasharray:20;stroke-dashoffset:20;transition:.3s;}
+  .check-row.done .box{background:var(--theme);border-color:var(--theme);}
+  .check-row.done .box svg{stroke-dashoffset:0;}
+  .row-emoji{font-size:21px;}.row-text{flex:1;}
+  .row-text b{font-size:15px;font-weight:600;display:block;}
+  .row-text span{font-size:12.5px;color:var(--ink-soft);}
+  .check-row.done .row-text b{color:var(--ink-soft);text-decoration:line-through;text-decoration-color:#cbbfa8;}
+
+  /* Væske */
+  .water-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:4px;}
+  .water-count{font-family:'Fraunces',serif;font-size:30px;font-weight:600;line-height:1;}
+  .water-count small{font-size:14px;color:var(--ink-soft);font-family:'Hanken Grotesk';font-weight:600;}
+  .water-sub{font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;}
+  .water-sub b{color:var(--ink);}
+  .glasses{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:14px;}
+  .glass{width:34px;height:42px;border-radius:6px 6px 11px 11px;border:2px solid #bcd0d6;position:relative;overflow:hidden;cursor:pointer;transition:.2s;background:#fff;}
+  .glass::after{content:"";position:absolute;left:0;right:0;bottom:0;height:0%;background:linear-gradient(#9ecfe0,#6fb4cf);transition:height .35s cubic-bezier(.3,1.2,.5,1);}
+  .glass.full::after{height:100%;}
+  .glass:active{transform:scale(.9);}
+  .water-btns{display:flex;gap:10px;}
+  .wbtn{flex:1;border:none;border-radius:14px;padding:12px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;transition:.2s;}
+  .wbtn.add{background:var(--theme);color:#fff;transition:background .8s;}
+  .wbtn.sub{background:#efe7d8;color:var(--ink-soft);}
+  .wbtn:active{transform:scale(.97);}
+
+  /* Vægt */
+  .weight-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:12px;}
+  .weight-val{font-family:'Fraunces',serif;font-size:30px;font-weight:600;line-height:1;}
+  .weight-val small{font-size:14px;color:var(--ink-soft);font-family:'Hanken Grotesk';font-weight:600;}
+  .weight-delta{font-size:12.5px;font-weight:600;color:var(--ink-soft);}
+  .weight-input-row{display:flex;gap:10px;}
+  .weight-input-row input{flex:1;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--cream);font-family:inherit;font-size:15px;color:var(--ink);}
+  .weight-input-row button{border:none;border-radius:14px;padding:0 18px;background:var(--theme);color:#fff;font-family:inherit;font-weight:700;cursor:pointer;transition:background .8s;}
+  .weight-input-row button:active{transform:scale(.97);}
+  .spark{display:flex;align-items:flex-end;gap:5px;height:40px;margin-top:14px;}
+  .spark .bar{flex:1;background:var(--theme);border-radius:4px 4px 2px 2px;opacity:.5;transition:height .4s, background .8s;min-height:4px;}
+  .spark .bar:last-child{opacity:1;}
+
+  /* ---------- ØVELSER-SIDE ---------- */
+  .page-head{font-family:'Fraunces',serif;font-size:34px;font-weight:500;line-height:1.05;letter-spacing:-.01em;margin-bottom:4px;}
+  .page-head em{font-style:italic;color:var(--theme-deep);transition:color .8s;}
+  .page-sub{font-size:14px;line-height:1.5;color:var(--ink-soft);margin-bottom:18px;}
+  .level-tabs{display:flex;gap:8px;margin-bottom:8px;}
+  .level-tab{flex:1;border:1px solid var(--line);background:var(--cream-2);border-radius:16px;padding:11px 6px;text-align:center;cursor:pointer;transition:.22s;}
+  .level-tab b{display:block;font-size:14px;font-weight:700;}
+  .level-tab span{font-size:10px;color:var(--ink-soft);letter-spacing:.04em;text-transform:uppercase;}
+  .level-tab.active{background:var(--theme);border-color:var(--theme);color:#fff;}
+  .level-tab.active span{color:rgba(255,255,255,.85);}
+  .level-note{font-size:12.5px;color:var(--ink-soft);margin:12px 0 18px;line-height:1.5;background:var(--theme-soft);padding:12px 14px;border-radius:14px;transition:background .8s;}
+
+  .ex-card{background:var(--cream-2);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:13px;box-shadow:var(--shadow);display:flex;gap:14px;align-items:flex-start;animation:rise .5s both;}
+  .ex-emoji{font-size:30px;line-height:1;flex-shrink:0;width:50px;height:50px;border-radius:14px;background:var(--theme-soft);display:flex;align-items:center;justify-content:center;transition:background .8s;}
+  .ex-body{flex:1;}
+  .ex-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+  .ex-name{font-family:'Fraunces',serif;font-size:18px;font-weight:600;line-height:1.15;}
+  .ex-meta{font-size:12px;font-weight:700;color:var(--theme-deep);white-space:nowrap;transition:color .8s;}
+  .ex-desc{font-size:13px;line-height:1.45;color:var(--ink-soft);margin:5px 0 9px;}
+  .ex-tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:4px 9px;border-radius:20px;}
+  .tag-pelvic{background:#F3E0EA;color:#9C3D6A;}
+  .tag-core{background:#E5EFD9;color:#4A7A2E;}
+  .tag-posture{background:#FBEAD2;color:#B97D2E;}
+
+  /* Tabbar */
+  .tabbar{position:absolute;bottom:0;left:0;right:0;height:84px;background:rgba(251,248,242,.88);backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;align-items:flex-start;justify-content:space-around;padding:12px 14px 0;z-index:40;}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--ink-soft);font-size:10px;font-weight:600;cursor:pointer;flex:1;}
+  .tab svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.8;}
+  .tab.active{color:var(--theme-deep);transition:color .8s;}
+
+  /* Modal */
+  .modal-bg{position:absolute;inset:0;background:rgba(50,45,38,.4);backdrop-filter:blur(3px);display:none;align-items:flex-end;z-index:60;}
+  .modal-bg.open{display:flex;}
+  .modal{background:var(--cream-2);width:100%;border-radius:30px 30px 0 0;padding:24px 22px 30px;animation:slideUp .35s cubic-bezier(.2,.9,.3,1);}
+  @keyframes slideUp{from{transform:translateY(100%);}to{transform:none;}}
+  .modal h3{font-family:'Fraunces',serif;font-size:22px;font-weight:500;margin-bottom:4px;}
+  .modal p{font-size:13px;color:var(--ink-soft);margin-bottom:18px;line-height:1.4;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin-bottom:7px;}
+  .field input{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:14px;background:var(--cream);font-family:inherit;font-size:15px;color:var(--ink);}
+  .save-btn{width:100%;background:var(--theme);color:#fff;border:none;border-radius:16px;padding:15px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer;margin-top:4px;transition:background .8s;}
+  .save-btn:active{transform:scale(.98);}
+
+  /* ---------- HISTORIK ---------- */
+  .range-tabs{display:flex;gap:8px;margin-bottom:16px;}
+  .range-tab{flex:1;border:1px solid var(--line);background:var(--cream-2);border-radius:14px;padding:9px 6px;text-align:center;cursor:pointer;font-size:13px;font-weight:700;transition:.2s;}
+  .range-tab.active{background:var(--theme);border-color:var(--theme);color:#fff;}
+  .h-card{background:var(--cream-2);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);}
+  .h-title{font-family:'Fraunces',serif;font-size:17px;font-weight:600;margin-bottom:2px;}
+  .h-sub{font-size:12px;color:var(--ink-soft);margin-bottom:14px;}
+  .chart{display:flex;align-items:flex-end;gap:4px;height:110px;}
+  .chart .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:flex-end;height:100%;}
+  .chart .colbar{width:100%;max-width:22px;border-radius:5px 5px 3px 3px;background:var(--theme);transition:height .5s, background .8s;min-height:3px;}
+  .chart .collab{font-size:8.5px;color:var(--ink-soft);white-space:nowrap;}
+  .line-wrap{position:relative;height:120px;}
+  .line-wrap svg{width:100%;height:100%;overflow:visible;}
+  .stat-grid{display:flex;gap:10px;margin-bottom:14px;}
+  .stat-grid .s{flex:1;background:var(--cream-2);border:1px solid var(--line);border-radius:18px;padding:14px 8px;text-align:center;box-shadow:var(--shadow);}
+  .stat-grid .s b{font-family:'Fraunces',serif;font-size:22px;font-weight:600;display:block;color:var(--theme-deep);transition:color .8s;line-height:1.1;}
+  .stat-grid .s span{font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .heat{display:flex;flex-wrap:wrap;gap:5px;}
+  .heat .d{width:13.5%;aspect-ratio:1;border-radius:5px;background:#ece3d3;display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--ink-soft);}
+  .legend{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-soft);margin-top:10px;}
+  .legend i{width:11px;height:11px;border-radius:3px;display:inline-block;}
+  .empty{text-align:center;color:var(--ink-soft);font-size:13px;padding:18px 0;line-height:1.5;}
+
+  /* ---------- INDSTILLINGER ---------- */
+  .set-card{background:var(--cream-2);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);}
+  .set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);}
+  .set-row:last-child{border-bottom:none;}
+  .set-row .lbl{font-size:14px;font-weight:600;display:flex;align-items:center;gap:9px;}
+  .set-row .lbl small{display:block;font-weight:400;color:var(--ink-soft);font-size:11.5px;}
+  .set-row input[type=time]{border:1px solid var(--line);border-radius:11px;padding:8px 10px;background:var(--cream);font-family:inherit;font-size:14px;color:var(--ink);}
+  .set-row input[type=date],.set-row input[type=number]{border:1px solid var(--line);border-radius:11px;padding:8px 10px;background:var(--cream);font-family:inherit;font-size:14px;color:var(--ink);width:120px;text-align:right;}
+  /* toggle */
+  .sw{position:relative;width:48px;height:28px;flex-shrink:0;}
+  .sw input{display:none;}
+  .sw .track{position:absolute;inset:0;background:#ddd2bd;border-radius:20px;transition:.25s;cursor:pointer;}
+  .sw .track::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;background:#fff;border-radius:50%;transition:.25s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+  .sw input:checked + .track{background:var(--theme);}
+  .sw input:checked + .track::after{transform:translateX(20px);}
+  .ghost-btn{width:100%;border:1px solid var(--line);background:transparent;color:var(--ink-soft);padding:12px;border-radius:14px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;}
+  .ghost-btn:active{background:#f0e9da;}
+  .danger{color:#a8453f;border-color:#e7c3bf;}
+  .perm-note{font-size:12px;line-height:1.5;color:var(--ink-soft);background:var(--theme-soft);border-radius:12px;padding:11px 13px;margin-top:6px;transition:background .8s;}
+
+  .footer-note{text-align:center;font-size:11px;color:var(--ink-soft);line-height:1.5;margin-top:6px;padding:0 8px;}
+  .proto-tag{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--cream);font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:7px 16px;border-radius:30px;z-index:99;}
+</style>
+</head>
+<body>
+
+<div class="device">
+  <div class="screen" id="screen">
+    <div class="notch"></div>
+
+    <!-- ============ VIEW: I DAG ============ -->
+    <div class="scroll view" id="view-today">
+      <div class="hello" id="greeting">God morgen</div>
+      <h1 class="brand">Bl<em>oo</em>m</h1>
+      <div class="tagline">Følg din rytme — i takt med din krop.</div>
+      <div class="date" id="todayDate">—</div>
+
+      <div class="summary">
+        <div class="stat"><b id="statMeals">0/3</b><span>Måltider</span></div>
+        <div class="stat"><b id="statMove">0/2</b><span>Bevægelse</span></div>
+        <div class="stat"><b id="statWater">0 ml</b><span>Væske</span></div>
+      </div>
+
+      <div class="card cycle" id="cycleCard">
+        <div class="card-label"><span class="dot"></span> Din cyklus</div>
+        <div class="phase-top">
+          <div><div class="phase-name" id="phaseName">Sæt din cyklus op</div><div class="phase-season" id="phaseSeason">— indre årstid —</div></div>
+          <div class="phase-emoji" id="phaseEmoji">🌸</div>
+        </div>
+        <div class="phase-mid">
+          <div class="ring" id="ring"><b id="ringDay">–</b><small>dag</small></div>
+          <div class="phase-desc" id="phaseDesc">Tryk nedenfor og indtast første dag i din seneste menstruation, så regner appen ud, hvor du er — og hele appens farver skifter med din fase.</div>
+        </div>
+        <button class="setup-btn" id="setupBtn">⚙︎ Indstil cyklus</button>
+      </div>
+
+      <div class="card" id="foodCard">
+        <div class="card-label"><span class="dot"></span> Mad til din fase</div>
+        <div class="food-intro" id="foodIntro">Indstil din cyklus for at få fødevareforslag, der støtter din hormonbalance lige nu.</div>
+        <div class="food-grid" id="foodGrid"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-label"><span class="dot"></span> Dagens måltider</div>
+        <div class="check-row" data-key="meal_morgen"><div class="box"><svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg></div><div class="row-emoji">🌅</div><div class="row-text"><b>Morgenmad</b><span>Husk at starte dagen med næring</span></div></div>
+        <div class="check-row" data-key="meal_frokost"><div class="box"><svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg></div><div class="row-emoji">🥗</div><div class="row-text"><b>Frokost</b><span>Tag en pause og spis ordentligt</span></div></div>
+        <div class="check-row" data-key="meal_aften"><div class="box"><svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg></div><div class="row-emoji">🌙</div><div class="row-text"><b>Aftensmad</b><span>Rolig, nærende afslutning på dagen</span></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-label"><span class="dot"></span> Bevægelse & krop</div>
+        <div class="check-row" data-key="move_walk"><div class="box"><svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg></div><div class="row-emoji">🚶‍♀️</div><div class="row-text"><b>En gåtur</b><span>Frisk luft & bevægelse</span></div></div>
+        <div class="check-row" data-key="move_core"><div class="box"><svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg></div><div class="row-emoji">🧘‍♀️</div><div class="row-text"><b>Core-træning</b><span>Find inspiration under <i>Øvelser</i> ↓</span></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-label"><span class="dot"></span> Væskeindtag</div>
+        <div class="water-head">
+          <div class="water-count"><span id="waterNum">0</span><small> glas</small></div>
+          <div class="water-count" style="font-size:22px"><span id="waterMl">0</span><small> / 2000 ml</small></div>
+        </div>
+        <div class="water-sub">1 glas = <b>250 ml</b> · anbefalet mål ca. <b>2 liter (8 glas)</b> om dagen</div>
+        <div class="glasses" id="glasses"></div>
+        <div class="water-btns"><button class="wbtn sub" id="waterSub">− Glas</button><button class="wbtn add" id="waterAdd">+ Glas (250 ml)</button></div>
+      </div>
+
+      <div class="card">
+        <div class="card-label"><span class="dot"></span> Vægt</div>
+        <div class="weight-head"><div class="weight-val"><span id="weightVal">–</span><small> kg</small></div><div class="weight-delta" id="weightDelta"></div></div>
+        <div class="weight-input-row"><input type="number" id="weightInput" inputmode="decimal" step="0.1" placeholder="Registrér din vægt i dag (kg)"><button id="weightSave">Gem</button></div>
+        <div class="spark" id="weightSpark"></div>
+      </div>
+
+      <div class="footer-note">Bloom giver generelle velvære- og fødevareforslag inspireret af cyklussens fire faser — ikke lægefaglige råd. Mærker du markante forandringer, så tal med din læge. 🌿</div>
+    </div>
+
+    <!-- ============ VIEW: ØVELSER ============ -->
+    <div class="scroll view" id="view-exercises" hidden>
+      <h1 class="page-head">Pilates & <em>yoga</em></h1>
+      <div class="page-sub">Blide, opbyggende øvelser med fokus på efterfødsel, bækkenbund og kropsholdning. Vælg det niveau der passer dig lige nu.</div>
+
+      <div class="level-tabs" id="levelTabs">
+        <div class="level-tab active" data-level="1"><b>Niveau 1</b><span>Blid start</span></div>
+        <div class="level-tab" data-level="2"><b>Niveau 2</b><span>Opbygning</span></div>
+        <div class="level-tab" data-level="3"><b>Niveau 3</b><span>Styrke</span></div>
+      </div>
+      <div class="level-note" id="levelNote"></div>
+
+      <div id="exList"></div>
+
+      <div class="footer-note">Efter to fødsler kan mavemusklerne være delt (diastase) og bækkenbunden svækket. Start blidt, undgå at presse maven udad, og stop ved smerte eller utæthed. Er du i tvivl, så få et tjek hos en fysioterapeut eller jordemoder, før du går op i niveau. 🌿</div>
+    </div>
+
+    <!-- ============ VIEW: HISTORIK ============ -->
+    <div class="scroll view" id="view-history" hidden>
+      <h1 class="page-head">Din <em>historik</em></h1>
+      <div class="page-sub">Se dine mønstre over tid — væske, vægt, måltider og bevægelse.</div>
+
+      <div class="range-tabs" id="rangeTabs">
+        <div class="range-tab active" data-range="7">7 dage</div>
+        <div class="range-tab" data-range="14">14 dage</div>
+        <div class="range-tab" data-range="30">30 dage</div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="s"><b id="hAvgWater">–</b><span>Ø væske/dag</span></div>
+        <div class="s"><b id="hStreak">0</b><span>Dages stime</span></div>
+        <div class="s"><b id="hLogged">0</b><span>Dage logget</span></div>
+      </div>
+
+      <div class="h-card">
+        <div class="h-title">💧 Væskeindtag</div>
+        <div class="h-sub" id="hWaterSub">ml pr. dag</div>
+        <div class="chart" id="hWaterChart"></div>
+      </div>
+
+      <div class="h-card">
+        <div class="h-title">⚖️ Vægt</div>
+        <div class="h-sub" id="hWeightSub">kg over tid</div>
+        <div class="line-wrap"><svg id="hWeightChart" viewBox="0 0 300 120" preserveAspectRatio="none"></svg></div>
+        <div id="hWeightEmpty"></div>
+      </div>
+
+      <div class="h-card">
+        <div class="h-title">🍽️ Måltider & bevægelse</div>
+        <div class="h-sub">Hvor meldt af de 5 daglige punkter du klarede (3 måltider + 2 bevægelse)</div>
+        <div class="heat" id="hHeat"></div>
+        <div class="legend"><i style="background:#ece3d3"></i> 0 <i style="background:var(--theme);opacity:.4"></i> nogle <i style="background:var(--theme)"></i> alle 5</div>
+      </div>
+    </div>
+
+    <!-- ============ VIEW: MIG / INDSTILLINGER ============ -->
+    <div class="scroll view" id="view-me" hidden>
+      <h1 class="page-head">Mig & <em>påmindelser</em></h1>
+      <div class="page-sub">Indstil din cyklus og hvornår appen skal minde dig.</div>
+
+      <div class="set-card">
+        <div class="set-row">
+          <div class="lbl">🔔 Påmindelser<small>Notifikationer på faste tider</small></div>
+          <label class="sw"><input type="checkbox" id="notifToggle"><span class="track"></span></label>
+        </div>
+        <div class="perm-note" id="permNote">Slå til for at få besked om måltider, bevægelse og væske. Tider sættes nedenfor.</div>
+        <div class="perm-note" id="pushNote" style="margin-top:8px;display:none"></div>
+      </div>
+
+      <div class="set-card" id="reminderCard">
+        <div class="set-row"><div class="lbl">🌅 Morgenmad</div><input type="time" data-rem="morgen" value="08:00"></div>
+        <div class="set-row"><div class="lbl">🥗 Frokost</div><input type="time" data-rem="frokost" value="12:00"></div>
+        <div class="set-row"><div class="lbl">🌙 Aftensmad</div><input type="time" data-rem="aften" value="18:00"></div>
+        <div class="set-row"><div class="lbl">🚶‍♀️ Gåtur</div><input type="time" data-rem="walk" value="15:00"></div>
+        <div class="set-row"><div class="lbl">🧘‍♀️ Core-træning</div><input type="time" data-rem="core" value="17:00"></div>
+        <div class="set-row"><div class="lbl">💧 Drik vand<small>Mindst hver gang</small></div><input type="time" data-rem="water" value="10:00"></div>
+      </div>
+
+      <div class="set-card">
+        <div class="set-row"><div class="lbl">🌙 Seneste menstruation</div><input type="date" id="meStart"></div>
+        <div class="set-row"><div class="lbl">📅 Cykluslængde</div><input type="number" id="meLen" min="21" max="40" value="28"></div>
+        <button class="save-btn" id="meSaveCycle" style="margin-top:14px">Gem cyklus</button>
+      </div>
+
+      <div class="set-card">
+        <button class="ghost-btn" id="testNotif">Send en test-notifikation</button>
+        <div style="height:10px"></div>
+        <button class="ghost-btn danger" id="resetData">Nulstil alle data</button>
+      </div>
+
+      <div class="footer-note">På iPhone vises notifikationer pålideligt, mens appen har været åbnet for nylig. Garanterede påmindelser i baggrunden (når appen er helt lukket) kræver en push-server — det kan tilføjes senere. 🌿</div>
+    </div>
+
+    <!-- TABBAR -->
+    <div class="tabbar" id="tabbar">
+      <div class="tab active" data-go="today"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>I dag</div>
+      <div class="tab" data-go="exercises"><svg viewBox="0 0 24 24"><path d="M6 7v10M18 7v10M6 12h12M3 9v6M21 9v6"/></svg>Øvelser</div>
+      <div class="tab" data-go="history"><svg viewBox="0 0 24 24"><path d="M4 19V5M9 19v-7M14 19V9M19 19v-11"/></svg>Historik</div>
+      <div class="tab" data-go="me"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Mig</div>
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal-bg" id="modalBg">
+      <div class="modal">
+        <h3>Indstil din cyklus</h3>
+        <p>Vi bruger kun datoen til at regne din fase ud. Alt gemmes lokalt på din enhed.</p>
+        <div class="field"><label>Første dag i seneste menstruation</label><input type="date" id="startInput"></div>
+        <div class="field"><label>Cykluslængde (dage)</label><input type="number" id="lenInput" min="21" max="40" value="28"></div>
+        <button class="save-btn" id="saveCycle">Gem</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+/* ---- Faser + KRAFTIGE fasetemaer + fødevareråd (indre årstider, Flow Intimates) ---- */
+const PHASES = {
+  winter:{name:"Menstruation",season:"❄️ Indre vinter",emoji:"🌙",
+    theme:"#B8567F",deep:"#8A375E",bg1:"#F4D2E2",bg2:"#EDBBD4",tint:"#F7D8E6",soft:"#F6E2EC",
+    desc:"Østrogen og progesteron er lavest. Kroppen arbejder hårdt — skru ned for tempoet, hvil og vær blid ved dig selv.",
+    foodIntro:"Din krop taber lidt jern under blødningen. <b>Vælg varme, nærende og jernrige måltider</b> der støtter genopfyldning.",
+    foods:[{ic:"🥩",b:"Jern + C-vitamin",t:"Linser, bønner, rødt kød, spinat — sammen med citrus for bedre optag."},{ic:"🍲",b:"Varmt & blødt",t:"Supper, gryderetter og grød der er nemme at fordøje."},{ic:"🍫",b:"Magnesium",t:"Mørk chokolade, græskarkerner og havre kan dæmpe kramper."},{ic:"🫖",b:"Te frem for kaffe",t:"Ingefær- eller kamillete er mildere ved maven."}]},
+  spring:{name:"Follikulær fase",season:"🌱 Indre forår",emoji:"🌷",
+    theme:"#5FA23F",deep:"#3E7325",bg1:"#DCEFC9",bg2:"#C6E5A7",tint:"#E5F2D6",soft:"#E8F1DC",
+    desc:"Østrogen stiger, energien vender tilbage. Hovedet bliver klarere — godt tidspunkt til nye projekter og planer.",
+    foodIntro:"Energien er stigende. <b>Vælg friske, lette og fermenterede fødevarer</b> der støtter den begyndende østrogenproduktion.",
+    foods:[{ic:"🥬",b:"Friske grøntsager",t:"Bladgrønt, spirer og rå grøntsager passer til den lette energi."},{ic:"🫧",b:"Fermenteret",t:"Yoghurt, kimchi og surkål støtter tarm og hormonbalance."},{ic:"🥑",b:"Sunde fedtstoffer",t:"Avocado, nødder og olivenolie giver byggesten til hormoner."},{ic:"🐟",b:"Lettere protein",t:"Fisk, æg og kylling giver stabil energi uden at tynge."}]},
+  summer:{name:"Ægløsning",season:"☀️ Indre sommer",emoji:"🌞",
+    theme:"#EE9A2E",deep:"#C0700F",bg1:"#FCE6BD",bg2:"#FAD590",tint:"#FDEAC8",soft:"#FBEACB",
+    desc:"Østrogen topper — selvtillid, social lyst og overskud er på sit højeste. \"On top of the world\"-energi.",
+    foodIntro:"Du er i din mest energirige fase. <b>Vælg fiberrigt og antiinflammatorisk</b>, så kroppen balancerer østrogen blidt.",
+    foods:[{ic:"🥦",b:"Fiber & korsblomstrede",t:"Broccoli, blomkål og grønkål hjælper med at balancere østrogen."},{ic:"🍓",b:"Bær & farver",t:"Antioxidanter fra bær og farverige grøntsager mod inflammation."},{ic:"🌰",b:"Frø & nødder",t:"Hørfrø og solsikkekerner støtter den naturlige hormonrytme."},{ic:"💧",b:"Masser af væske",t:"Vandrige grøntsager og rigeligt at drikke i den aktive fase."}]},
+  autumn:{name:"Lutealfase",season:"🍂 Indre efterår",emoji:"🍁",
+    theme:"#D06A30",deep:"#9E4D1B",bg1:"#F6DAC1",bg2:"#EFC39E",tint:"#F8E0CC",soft:"#F7E4D3",
+    desc:"Progesteron stiger og falder så brat — energien vender indad. PMS kan melde sig; vær tålmodig med dig selv.",
+    foodIntro:"Mod PMS og trang: <b>vælg langsomme kulhydrater og magnesium</b> der stabiliserer blodsukker og humør.",
+    foods:[{ic:"🍠",b:"Langsomme kulhydrater",t:"Søde kartofler, fuldkorn og havre holder blodsukker og humør stabilt."},{ic:"🥬",b:"Magnesium",t:"Mørkegrønt, bananer og bælgfrugter kan mildne kramper og irritation."},{ic:"🍫",b:"Lidt mørk chokolade",t:"Stiller trang uden store blodsukkerudsving."},{ic:"🧂",b:"Mindre salt & koffein",t:"Mindre salt mod oppustethed; mindre koffein mod uro og dårlig søvn."}]}
+};
+const DEFAULT_THEME={theme:"#7A8B66",deep:"#54684A",bg1:"#e7dcc6",bg2:"#ddccbe",tint:"#FBF8F2",soft:"#EFEAD9"};
+const GLASS_ML=250, GOAL_GLASSES=8;
+
+/* ---- Øvelser (efterfødsel · bækkenbund · kropsholdning) ---- */
+const FOCUS={pelvic:{label:"Bækkenbund",cls:"tag-pelvic"},core:{label:"Efterfødsel-core",cls:"tag-core"},posture:{label:"Kropsholdning",cls:"tag-posture"}};
+const LEVEL_NOTES={
+  1:"Blid genopbygning efter fødsel. Fokus på at genfinde forbindelsen til bækkenbund og dyb mave. Ingen pres, ingen knæk-mave-øvelser.",
+  2:"Du har genfundet kontakten og vil bygge styrke op. Lidt mere modstand og holdetid — stop hvis maven buler ud på midten.",
+  3:"Stærkere core- og bækkenbundstræning. Kun når niveau 1–2 føles let og kontrolleret, og du ikke oplever utæthed eller tryk."
+};
+const EXERCISES=[
+  {n:"Bækkenbunds-vejrtrækning",f:"pelvic",lv:[1,2,3],meta:"5 min",e:"🌬️",d:"Lig på ryggen. Træk vejret ned i maven; på udånding samles og løftes bækkenbunden blidt. Grundstenen i al genoptræning."},
+  {n:"Bækkenbundsknib (Kegel)",f:"pelvic",lv:[1,2,3],meta:"10 × 3",e:"🔹",d:"Knib som for at standse vandladning, hold 3–5 sek., slip helt. Lige så vigtigt at slippe som at knibe."},
+  {n:"Bækkentilt",f:"core",lv:[1],meta:"10 gent.",e:"🔁",d:"Liggende med bøjede knæ. Vip bækkenet så lænden presses blidt mod gulvet, og slip. Aktiverer dyb mave skånsomt."},
+  {n:"Kat–ko",f:"posture",lv:[1,2],meta:"8 gent.",e:"🐱",d:"På alle fire: skift mellem rund og svaj ryg i takt med vejrtrækningen. Mobiliserer rygsøjlen og letter holdningen."},
+  {n:"Hælglid",f:"core",lv:[1],meta:"8 / side",e:"🦶",d:"Liggende, glid én hæl langsomt ud og hjem mens du holder lænden stabil. Tidlig, sikker core-aktivering."},
+  {n:"Barnets stilling",f:"posture",lv:[1],meta:"1–2 min",e:"🧎‍♀️",d:"Sid tilbage på hælene, stræk armene frem. Blid udstrækning af ryg og hofter — dejlig i de rolige faser."},
+  {n:"Bækkenløft (glute bridge)",f:"pelvic",lv:[2,3],meta:"12 gent.",e:"🌉",d:"Løft hoften mod loftet på en udånding, knib bækkenbund og baller i toppen. Styrker bagside og bækkenbund."},
+  {n:"Bird dog",f:"core",lv:[2,3],meta:"8 / side",e:"🐦",d:"På alle fire: stræk modsat arm og ben ud, hold ryggen helt rolig. Træner dyb stabilitet og balance."},
+  {n:"Dead bug (modificeret)",f:"core",lv:[2],meta:"8 / side",e:"🪲",d:"På ryggen med løftede ben: sænk modsat arm og ben uden at lænden slipper gulvet. Diastase-venlig core."},
+  {n:"Vægengle",f:"posture",lv:[2],meta:"10 gent.",e:"🧱",d:"Stå med ryg mod væggen, glid armene op og ned som en engel. Åbner brystet og retter foroverbøjet holdning op."},
+  {n:"Modificeret sideplanke",f:"core",lv:[2],meta:"20 sek / side",e:"📐",d:"Sideleje støttet på knæ og underarm, løft hoften. Styrker sidekæden uden for meget tryk på maven."},
+  {n:"Skulderblads-knib",f:"posture",lv:[2,3],meta:"12 gent.",e:"💪",d:"Træk skulderbladene sammen og ned. Modvirker rundede skuldre fra amning og babyløft."},
+  {n:"Fuld planke",f:"core",lv:[3],meta:"30–45 sek",e:"▬",d:"Hold krop som en lige linje, knib bækkenbund og dyb mave. Kun når midten kan holdes flad uden at bule ud."},
+  {n:"Sideplanke",f:"core",lv:[3],meta:"30 sek / side",e:"📏",d:"Fuld sideplanke på fod og underarm. Stærk træning af den skrå mavemuskulatur og taljen."},
+  {n:"Glute bridge på ét ben",f:"pelvic",lv:[3],meta:"10 / side",e:"🦵",d:"Bækkenløft med ét ben strakt. Udfordrer bækkenbund, baller og stabilitet markant mere."},
+  {n:"Pilates 'the hundred' (mod.)",f:"core",lv:[3],meta:"50–100 puls",e:"💯",d:"Liggende med løftede ben, pulser armene mens du ånder rytmisk. Klassisk pilates dyb core-udholdenhed."},
+  {n:"Stående roll-down",f:"posture",lv:[3],meta:"6 gent.",e:"🙆‍♀️",d:"Rul langsomt ned hvirvel for hvirvel og op igen. Smidiggør ryggen og styrker kropsbevidsthed og holdning."}
+];
+
+/* ---- Lagring (graceful) ---- */
+const mem={};
+const store={get(k){try{const v=localStorage.getItem(k);return v===null?(k in mem?mem[k]:null):v;}catch(e){return k in mem?mem[k]:null;}},set(k,v){try{localStorage.setItem(k,v);}catch(e){mem[k]=v;}}};
+const todayKey=()=> "bloom_"+new Date().toISOString().slice(0,10);
+
+/* ---- Tema ---- */
+function applyTheme(t){const r=document.documentElement.style;r.setProperty("--theme",t.theme);r.setProperty("--theme-deep",t.deep);r.setProperty("--theme-bg1",t.bg1);r.setProperty("--theme-bg2",t.bg2);r.setProperty("--theme-tint",t.tint);r.setProperty("--theme-soft",t.soft);}
+
+/* ---- Cyklus ---- */
+function phaseFor(day,len){if(day<=5)return"winter";const ovu=len-14;if(day<ovu)return"spring";if(day<=ovu+1)return"summer";return"autumn";}
+function renderCycle(){
+  const start=store.get("bloom_start"); const len=parseInt(store.get("bloom_len")||"28",10);
+  if(!start){applyTheme(DEFAULT_THEME);return;}
+  const d0=new Date(start+"T00:00:00"); const now=new Date();now.setHours(0,0,0,0);
+  let diff=Math.floor((now-d0)/86400000); let day=((diff%len)+len)%len+1;
+  const p=PHASES[phaseFor(day,len)]; applyTheme(p);
+  document.getElementById("phaseName").textContent=p.name;
+  document.getElementById("phaseSeason").textContent=p.season;
+  document.getElementById("phaseEmoji").textContent=p.emoji;
+  document.getElementById("phaseDesc").textContent=p.desc;
+  document.getElementById("ringDay").textContent=day;
+  document.getElementById("ring").style.setProperty("--p",Math.round(day/len*100));
+  document.getElementById("foodIntro").innerHTML=p.foodIntro;
+  document.getElementById("foodGrid").innerHTML=p.foods.map(f=>`<div class="food-item"><div class="ic">${f.ic}</div><div class="txt"><b>${f.b}</b><span>${f.t}</span></div></div>`).join("");
+}
+
+/* ---- Checklister ---- */
+function loadChecks(){document.querySelectorAll(".check-row").forEach(row=>{const k=todayKey()+"_"+row.dataset.key;if(store.get(k)==="1")row.classList.add("done");row.addEventListener("click",()=>{row.classList.toggle("done");store.set(k,row.classList.contains("done")?"1":"0");updateStats();});});}
+
+/* ---- Væske ---- */
+function getWater(){return parseInt(store.get(todayKey()+"_water")||"0",10);}
+function setWater(n){n=Math.max(0,Math.min(16,n));store.set(todayKey()+"_water",n);renderWater();}
+function renderWater(){const n=getWater();document.getElementById("waterNum").textContent=n;document.getElementById("waterMl").textContent=n*GLASS_ML;
+  const g=document.getElementById("glasses"); const total=Math.max(GOAL_GLASSES,n); g.innerHTML="";
+  for(let i=0;i<total;i++){const el=document.createElement("div");el.className="glass"+(i<n?" full":"");el.title=GLASS_ML+" ml";el.onclick=()=>setWater(i<n?i:i+1);g.appendChild(el);}
+  updateStats();}
+
+/* ---- Vægt ---- */
+function getWeights(){try{return JSON.parse(store.get("bloom_weights")||"[]");}catch(e){return[];}}
+function renderWeight(){const w=getWeights();const valEl=document.getElementById("weightVal"),deltaEl=document.getElementById("weightDelta");
+  if(w.length===0){valEl.textContent="–";deltaEl.textContent="";document.getElementById("weightSpark").innerHTML="";return;}
+  const last=w[w.length-1].kg; valEl.textContent=last.toLocaleString("da-DK");
+  if(w.length>1){const diff=+(last-w[w.length-2].kg).toFixed(1);deltaEl.textContent=(diff>0?"▲ +":diff<0?"▼ ":"● ")+Math.abs(diff)+" kg siden sidst";}else deltaEl.textContent="Første registrering";
+  const recent=w.slice(-10);const min=Math.min(...recent.map(x=>x.kg)),max=Math.max(...recent.map(x=>x.kg));const range=(max-min)||1;
+  document.getElementById("weightSpark").innerHTML=recent.map(x=>`<div class="bar" style="height:${20+((x.kg-min)/range)*70}%"></div>`).join("");}
+function saveWeight(){const inp=document.getElementById("weightInput");const v=parseFloat((inp.value||"").replace(",","."));if(isNaN(v)||v<=0)return;
+  const w=getWeights();const today=new Date().toISOString().slice(0,10);const i=w.findIndex(x=>x.date===today);if(i>=0)w[i].kg=v;else w.push({date:today,kg:v});
+  store.set("bloom_weights",JSON.stringify(w));inp.value="";renderWeight();}
+
+/* ---- Stats ---- */
+function updateStats(){const meals=["meal_morgen","meal_frokost","meal_aften"].filter(k=>store.get(todayKey()+"_"+k)==="1").length;
+  const move=["move_walk","move_core"].filter(k=>store.get(todayKey()+"_"+k)==="1").length;
+  document.getElementById("statMeals").textContent=meals+"/3";document.getElementById("statMove").textContent=move+"/2";document.getElementById("statWater").textContent=getWater()*GLASS_ML+" ml";}
+
+/* ---- Øvelser ---- */
+let level=1;
+function renderExercises(){
+  document.getElementById("levelNote").textContent=LEVEL_NOTES[level];
+  const list=EXERCISES.filter(x=>x.lv.includes(level));
+  document.getElementById("exList").innerHTML=list.map((x,i)=>{const fo=FOCUS[x.f];
+    return `<div class="ex-card" style="animation-delay:${i*.04}s"><div class="ex-emoji">${x.e}</div><div class="ex-body">
+      <div class="ex-top"><div class="ex-name">${x.n}</div><div class="ex-meta">${x.meta}</div></div>
+      <div class="ex-desc">${x.d}</div><span class="ex-tag ${fo.cls}">${fo.label}</span></div></div>`;}).join("");
+}
+document.getElementById("levelTabs").addEventListener("click",e=>{const t=e.target.closest(".level-tab");if(!t)return;
+  document.querySelectorAll(".level-tab").forEach(x=>x.classList.remove("active"));t.classList.add("active");level=+t.dataset.level;renderExercises();});
+
+/* ---- Header ---- */
+function renderHeader(){const now=new Date();const h=now.getHours();
+  document.getElementById("greeting").textContent=h<10?"God morgen":h<14?"God formiddag":h<18?"God eftermiddag":"God aften";
+  document.getElementById("todayDate").textContent=now.toLocaleDateString("da-DK",{weekday:"long",day:"numeric",month:"long"});}
+
+/* ---- Navigation ---- */
+const VIEWS={today:"view-today",exercises:"view-exercises",history:"view-history",me:"view-me"};
+function showView(v){const id=VIEWS[v]||"view-today";document.querySelectorAll(".view").forEach(el=>el.hidden=true);document.getElementById(id).hidden=false;
+  if(v==="history")renderHistory(); if(v==="me")loadSettings();}
+document.getElementById("tabbar").addEventListener("click",e=>{const t=e.target.closest(".tab");if(!t)return;
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));t.classList.add("active");showView(t.dataset.go);});
+
+/* ---- Historik ---- */
+let histRange=7;
+function dayData(dateStr){const k="bloom_"+dateStr+"_";
+  const meals=["meal_morgen","meal_frokost","meal_aften"].filter(x=>store.get(k+x)==="1").length;
+  const move=["move_walk","move_core"].filter(x=>store.get(k+x)==="1").length;
+  const water=parseInt(store.get(k+"water")||"0",10)*GLASS_ML;
+  return {meals,move,water,done:meals+move};}
+function lastDates(n){const arr=[];const d=new Date();for(let i=n-1;i>=0;i--){const x=new Date(d);x.setDate(d.getDate()-i);arr.push(x.toISOString().slice(0,10));}return arr;}
+function renderHistory(){
+  const dates=lastDates(histRange); const data=dates.map(dayData);
+  const watered=data.filter(d=>d.water>0);
+  document.getElementById("hAvgWater").textContent=watered.length?Math.round(watered.reduce((s,d)=>s+d.water,0)/watered.length)+" ml":"–";
+  document.getElementById("hLogged").textContent=data.filter(d=>d.done>0||d.water>0).length;
+  let streak=0;for(let i=data.length-1;i>=0;i--){if(data[i].done>0||data[i].water>0)streak++;else break;}
+  document.getElementById("hStreak").textContent=streak;
+  // væske
+  const maxW=Math.max(2000,...data.map(d=>d.water));
+  document.getElementById("hWaterChart").innerHTML=data.map((d,i)=>{const h=Math.round(d.water/maxW*100);
+    const lab=histRange>14?(i%4===0?(+dates[i].slice(8))+"":""):(+dates[i].slice(8))+"";
+    return `<div class="col"><div class="colbar" style="height:${Math.max(3,h)}%"></div><div class="collab">${lab}</div></div>`;}).join("");
+  document.getElementById("hWaterSub").textContent="ml pr. dag · mål 2000 ml";
+  // vægt
+  renderWeightLine(dates);
+  // heatmap
+  document.getElementById("hHeat").innerHTML=data.map((d,i)=>{
+    const bg=d.done===0?"#ece3d3":"var(--theme)"; const op=d.done===0?1:(d.done>=5?1:.45);
+    return `<div class="d" style="background:${bg};opacity:${op}" title="${dates[i]}: ${d.done}/5 klaret">${+dates[i].slice(8)}</div>`;}).join("");
+}
+function renderWeightLine(dates){
+  const svg=document.getElementById("hWeightChart"); const empty=document.getElementById("hWeightEmpty");
+  const all=getWeights().filter(w=>dates.includes(w.date));
+  if(all.length<2){svg.innerHTML="";empty.innerHTML='<div class="empty">Registrér din vægt nogle dage for at se en kurve her.</div>';document.getElementById("hWeightSub").textContent="kg over tid";return;}
+  empty.innerHTML="";
+  const kgs=all.map(w=>w.kg); const min=Math.min(...kgs),max=Math.max(...kgs),range=(max-min)||1;
+  const W=300,H=120,pad=12,n=all.length;
+  const pts=all.map((w,i)=>[pad+(i/(n-1))*(W-2*pad), pad+(1-(w.kg-min)/range)*(H-2*pad)]);
+  const path=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
+  const area=path+` L ${pts[n-1][0].toFixed(1)} ${H} L ${pts[0][0].toFixed(1)} ${H} Z`;
+  svg.innerHTML=`<path d="${area}" fill="var(--theme)" opacity="0.12"/><path d="${path}" fill="none" stroke="var(--theme)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`+pts.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="var(--theme)"/>`).join("");
+  document.getElementById("hWeightSub").textContent=min.toLocaleString("da-DK")+"–"+max.toLocaleString("da-DK")+" kg";
+}
+document.getElementById("rangeTabs").addEventListener("click",e=>{const t=e.target.closest(".range-tab");if(!t)return;
+  document.querySelectorAll(".range-tab").forEach(x=>x.classList.remove("active"));t.classList.add("active");histRange=+t.dataset.range;renderHistory();});
+
+/* ---- Notifikationer ---- */
+const REM_LABELS={morgen:"🌅 Tid til morgenmad",frokost:"🥗 Tid til frokost",aften:"🌙 Tid til aftensmad",walk:"🚶‍♀️ Tid til en gåtur",core:"🧘‍♀️ Tid til core-træning",water:"💧 Husk at drikke vand"};
+function notifOn(){return store.get("bloom_notif")==="1" && ("Notification" in window) && Notification.permission==="granted";}
+function getRemTimes(){try{return JSON.parse(store.get("bloom_rem")||"{}");}catch(e){return {};}}
+function saveRemTimes(){const t={};document.querySelectorAll("[data-rem]").forEach(inp=>{t[inp.dataset.rem]=inp.value;});store.set("bloom_rem",JSON.stringify(t));}
+function fireNotif(title,body){try{
+    if(navigator.serviceWorker&&navigator.serviceWorker.ready){navigator.serviceWorker.ready.then(reg=>reg.showNotification(title,{body,icon:"icon-192.png",badge:"icon-192.png",tag:body}));}
+    else if("Notification" in window){new Notification(title,{body,icon:"icon-192.png"});}
+  }catch(e){}}
+let remTimer=null;
+function startScheduler(){if(remTimer)clearInterval(remTimer);remTimer=setInterval(checkReminders,30000);checkReminders();}
+function checkReminders(){if(!notifOn())return; if(store.get("bloom_push")==="1")return; const times=getRemTimes();const now=new Date();
+  const hm=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");const today=now.toISOString().slice(0,10);
+  Object.keys(times).forEach(key=>{if(times[key]===hm){const fk="bloom_fired_"+today+"_"+key;if(store.get(fk)!=="1"){store.set(fk,"1");fireNotif("Bloom 🌸",REM_LABELS[key]||"Påmindelse");}}});}
+
+/* ---- Baggrunds-push (Web Push via server) ---- */
+function cfg(){return window.BLOOM_CONFIG||{};}
+function pushConfigured(){const c=cfg();return !!(c.serverUrl && c.vapidPublicKey && ("serviceWorker" in navigator) && ("PushManager" in window));}
+function urlB64ToUint8(b64){const pad="=".repeat((4-b64.length%4)%4);const s=(b64+pad).replace(/-/g,"+").replace(/_/g,"/");const raw=atob(s);const arr=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);return arr;}
+async function getPushSub(){const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();
+  if(!sub){sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToUint8(cfg().vapidPublicKey)});}return sub;}
+async function syncPushSubscription(){if(!pushConfigured())return false;
+  try{const sub=await getPushSub();const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||"Europe/Copenhagen";
+    const r=await fetch(cfg().serverUrl.replace(/\/$/,"")+"/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({subscription:sub,reminders:getRemTimes(),timezone:tz})});
+    if(r.ok){store.set("bloom_push","1");updatePushNote();return true;}
+  }catch(e){}
+  store.set("bloom_push","0");updatePushNote();return false;}
+async function disablePush(){store.set("bloom_push","0");
+  if(!("serviceWorker" in navigator))return;
+  try{const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();
+    if(sub){const ep=sub.endpoint;if(cfg().serverUrl){fetch(cfg().serverUrl.replace(/\/$/,"")+"/unsubscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({endpoint:ep})}).catch(()=>{});}
+      await sub.unsubscribe().catch(()=>{});}
+  }catch(e){}}
+function updatePushNote(){const n=document.getElementById("pushNote");if(!n)return;
+  if(!pushConfigured()){n.style.display="none";return;}
+  n.style.display="block";
+  n.textContent=store.get("bloom_push")==="1"
+    ? "🌙 Baggrunds-påmindelser er aktive — du får besked på dine tider, også når appen er lukket."
+    : "Server er konfigureret. Slå påmindelser til ovenfor for også at få dem i baggrunden.";}
+
+/* ---- Indstillinger ---- */
+function updatePermNote(){const n=document.getElementById("permNote");
+  if(!("Notification" in window)){n.textContent="Din browser understøtter ikke notifikationer her. Føj appen til hjemmeskærmen og åbn den derfra.";return;}
+  if(store.get("bloom_notif")!=="1"){n.textContent="Slå til for at få besked om måltider, bevægelse og væske på de tider du vælger nedenfor.";return;}
+  if(Notification.permission==="granted")n.textContent="✅ Påmindelser er aktive. De vises, mens appen har været åbnet for nylig.";
+  else if(Notification.permission==="denied")n.textContent="⚠️ Notifikationer er blokeret. Tillad dem for Bloom i dine enhedsindstillinger.";
+  else n.textContent="Tryk på kontakten igen for at give tilladelse.";}
+function loadSettings(){
+  document.getElementById("notifToggle").checked=store.get("bloom_notif")==="1";
+  const times=getRemTimes();document.querySelectorAll("[data-rem]").forEach(inp=>{if(times[inp.dataset.rem])inp.value=times[inp.dataset.rem];});
+  const s=store.get("bloom_start");if(s)document.getElementById("meStart").value=s;
+  document.getElementById("meLen").value=store.get("bloom_len")||"28";
+  updatePermNote();updatePushNote();}
+document.getElementById("notifToggle").addEventListener("change",async e=>{
+  if(e.target.checked){saveRemTimes();
+    if("Notification" in window){let perm=Notification.permission;if(perm==="default"){try{perm=await Notification.requestPermission();}catch(_){}}
+      if(perm==="granted"){store.set("bloom_notif","1");startScheduler();
+        if(pushConfigured()){await syncPushSubscription();}
+        fireNotif("Bloom 🌸","Påmindelser er slået til 🌿");}
+      else{e.target.checked=false;store.set("bloom_notif","0");}
+    }else{e.target.checked=false;}
+  }else{store.set("bloom_notif","0");await disablePush();}
+  updatePermNote();updatePushNote();});
+document.querySelectorAll("[data-rem]").forEach(inp=>inp.addEventListener("change",()=>{saveRemTimes();if(store.get("bloom_push")==="1")syncPushSubscription();}));
+function flashBtn(id,txt){const b=document.getElementById(id);const o=b.textContent;b.textContent=txt;setTimeout(()=>b.textContent=o,1500);}
+document.getElementById("meSaveCycle").onclick=()=>{const s=document.getElementById("meStart").value;const l=document.getElementById("meLen").value||"28";if(s){store.set("bloom_start",s);store.set("bloom_len",l);renderCycle();}flashBtn("meSaveCycle","Gemt ✓");};
+document.getElementById("testNotif").onclick=async()=>{if(!("Notification" in window))return;let perm=Notification.permission;if(perm==="default"){try{perm=await Notification.requestPermission();}catch(_){}}if(perm==="granted")fireNotif("Bloom 🌸","Sådan ser en påmindelse ud 🌷");updatePermNote();};
+document.getElementById("resetData").onclick=()=>{if(confirm("Slet alle dine data i Bloom? Dette kan ikke fortrydes.")){try{Object.keys(localStorage).filter(k=>k.indexOf("bloom")===0).forEach(k=>localStorage.removeItem(k));}catch(e){}location.reload();}};
+
+/* ---- Events ---- */
+const modalBg=document.getElementById("modalBg");
+document.getElementById("setupBtn").onclick=()=>{const s=store.get("bloom_start");if(s)document.getElementById("startInput").value=s;document.getElementById("lenInput").value=store.get("bloom_len")||"28";modalBg.classList.add("open");};
+modalBg.onclick=e=>{if(e.target===modalBg)modalBg.classList.remove("open");};
+document.getElementById("saveCycle").onclick=()=>{const s=document.getElementById("startInput").value;const l=document.getElementById("lenInput").value||"28";if(s){store.set("bloom_start",s);store.set("bloom_len",l);}modalBg.classList.remove("open");renderCycle();};
+document.getElementById("waterAdd").onclick=()=>setWater(getWater()+1);
+document.getElementById("waterSub").onclick=()=>setWater(getWater()-1);
+document.getElementById("weightSave").onclick=saveWeight;
+document.getElementById("weightInput").addEventListener("keydown",e=>{if(e.key==="Enter")saveWeight();});
+
+/* ---- PWA: registrér service worker ---- */
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("service-worker.js").catch(()=>{});});}
+
+/* ---- Init ---- */
+renderHeader();loadChecks();renderWater();renderWeight();renderCycle();updateStats();renderExercises();startScheduler();
+if(store.get("bloom_push")==="1"){syncPushSubscription();}
+</script>
+</body>
+</html>

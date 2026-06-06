@@ -1,0 +1,18 @@
+{
+  "name": "bloom-push-server",
+  "version": "1.0.0",
+  "description": "Web Push-server til Bloom — sender notifikationer på faste tidspunkter.",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "keys": "node -e \"console.log(require('web-push').generateVAPIDKeys())\""
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "node-cron": "^3.0.3",
+    "web-push": "^3.6.7"
+  }
+}
