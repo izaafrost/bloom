@@ -19,7 +19,7 @@ En lys, iPhone-venlig **PWA** (Progressive Web App) til at følge sin daglige ry
 ## Teknik
 - **Frontend:** ét selvstændigt `index.html` (HTML/CSS/vanilla JS, ingen build). Skrifttyper: Fraunces + Hanken Grotesk. Ikoner: emoji + genereret blomster-ikon.
 - **PWA:** `manifest.json` + `service-worker.js` (cache-first offline, modtager push).
-- **Push-server (valgfri):** `server/` — Node + Express + `web-push` (VAPID) + `node-cron`. Sender notifikationer på brugerens tider (i deres tidszone), gemmer abonnementer i `subscriptions.json`.
+- **Push-server (valgfri):** `server.js` i repo-roden — Node + Express + `web-push` (VAPID) + `node-cron`. Sender notifikationer på brugerens tider (i deres tidszone), gemmer abonnementer i `subscriptions.json`.
 - **Konfiguration:** `config.js` kobler frontend til push-serveren (server-URL + offentlig VAPID-nøgle). Er den tom, kører appen med lokale påmindelser alene.
 
 ## Filstruktur
@@ -31,7 +31,8 @@ service-worker.js     offline + push
 icon-192.png / icon-512.png / apple-touch-icon.png
 README.md             projektoverblik
 PUBLICERING.md        trin-for-trin udgivelsesguide (GitHub Pages + Render)
-server/               valgfri push-server (se server/README.md)
+server.js / package.json / .env.example / .gitignore
+                      valgfri push-server (samme flade struktur, se README.md)
 ```
 
 ## Sådan kører man det

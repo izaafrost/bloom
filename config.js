@@ -2,7 +2,7 @@
    Bloom – konfiguration af baggrunds-notifikationer (Web Push)
 
    Udfyld disse to felter EFTER du har deployet push-serveren
-   (se mappen /server og dens README).
+   (se server.js og README.md i repo-roden).
 
    • serverUrl       = den fulde adresse på din deployede server,
                        fx "https://bloom-push.onrender.com"
