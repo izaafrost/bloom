@@ -14,5 +14,5 @@
    ───────────────────────────────────────────────────────────── */
 window.BLOOM_CONFIG = {
   serverUrl: "",
-  vapidPublicKey: "BC63yKPjySC6KOfkUwl3h_p2Lbtn35NnQ4wFsaJsNAWPdFiLybtlsr48QJn5g192Z4Lms_xKsOFllmdd7YzMsVU"
+  vapidPublicKey: "BNEOZzSVbUhEzHqQOugK8EsI04j5_sFhOya6F9otggBCToRcxW652ZufaWH61svXcNmAdUuBmXBxE0GDqA67_MA"
 };
