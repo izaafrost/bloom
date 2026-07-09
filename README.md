@@ -1,64 +1,101 @@
-# 🌙 Bloom Push-server
+# 🌸 Bloom · Cyklus & Velvære
 
-En lille Node-server der sender **baggrunds-notifikationer** til Bloom-appen på de tidspunkter brugeren har valgt — også når appen er helt lukket. Den bruger ægte **Web Push** (VAPID) og en **cron** der tjekker hvert minut.
+En lille, lys PWA der hjælper dig med at følge din rytme:
 
-## Hvad den gør
-- `GET /vapidPublicKey` → den offentlige nøgle
-- `POST /subscribe` → gemmer abonnement + påmindelsestider + tidszone
-- `POST /unsubscribe` → fjerner abonnement
-- Hvert minut: sender de påmindelser, der matcher klokkeslættet i brugerens tidszone (én gang pr. dag pr. påmindelse)
+- 🍽️ **Måltider** — påmindelse om morgenmad, frokost og aftensmad
+- 🚶‍♀️ **Bevægelse** — gåtur + core-træning
+- 🧘‍♀️ **Øvelser** — pilates/yoga i 3 niveauer med fokus på efterfødsel, bækkenbund og kropsholdning
+- 💧 **Væske** — glas á 250 ml mod et mål på ca. 2 liter
+- ⚖️ **Vægt** — registrering med lille trend-graf
+- 🌙 **Cyklus** — beregner din fase og skifter hele appens farver efter den
+- 🥗 **Fødevareforslag** — tilpasset hver cyklusfase for at støtte hormonbalancen
+- 🔔 **Påmindelser** — notifikationer på de tider du selv vælger
+- 📊 **Historik** — grafer over væske, vægt, måltider og bevægelse (7/14/30 dage)
 
-Abonnementer gemmes i `subscriptions.json` ved siden af serveren.
-
----
-
-## 1) VAPID-nøgler
-
-Der ligger allerede et nøglepar i `.env.example`. **Lav gerne dine egne** (og hold den private hemmelig):
-
-```bash
-npm install
-npm run keys
-```
-
-## 2) Kør lokalt
-
-```bash
-cp .env.example .env      # ret evt. nøgler + VAPID_SUBJECT (din mail)
-npm install
-npm start                 # lytter på http://localhost:3000
-```
-
-## 3) Deploy (gratis muligheder)
-
-Serveren skal køre **konstant** (cron'en kører hvert minut), så en "always-on" host er bedst.
-
-### Render.com (nemt)
-1. Læg `server`-mappen i et GitHub-repo (eller hele projektet).
-2. På Render: **New → Web Service**, peg på repo'et, og sæt **Root Directory** = `server`.
-3. Build command: `npm install` · Start command: `npm start`.
-4. Under **Environment** tilføj: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, og evt. `ALLOW_ORIGIN` (din app-adresse).
-5. Deploy. Din adresse bliver noget i stil med `https://bloom-push.onrender.com`.
-
-> ⚠️ Renders gratis-tier kan **sove** efter inaktivitet, hvilket kan forsinke cron'en. Vil du være sikker, brug en betalt "always-on" instans, en lille VPS, eller **Railway/Fly.io**, som holder processen vågen.
-
-### Andre
-- **Railway.app** / **Fly.io**: samme idé — kør `npm start`, sæt miljøvariablerne.
-- **Egen VPS**: kør med `pm2 start server.js` så den genstarter automatisk.
-
-## 4) Forbind appen
-I projektets **`config.js`** (ved siden af `index.html`) udfylder du:
-```js
-window.BLOOM_CONFIG = {
-  serverUrl: "https://din-server-adresse",   // uden skråstreg til sidst
-  vapidPublicKey: "DIN_OFFENTLIGE_VAPID_NØGLE"
-};
-```
-Brug **samme** offentlige nøgle som på serveren. Commit og push — så slår appen automatisk baggrunds-push til, når brugeren aktiverer påmindelser under **Mig**.
+Alle data gemmes **lokalt på din enhed** (`localStorage`). Intet sendes nogen steder.
 
 ---
 
-## Vigtigt om iOS
-- Baggrunds-push virker kun, når appen er **føjet til hjemmeskærmen** (installeret som PWA) på iOS 16.4+.
-- Brugeren skal **acceptere notifikationer** første gang.
-- `subscriptions.json` er ren fillagring — fint til personligt brug. Skal mange bruge den, så skift til en rigtig database.
+## 📁 Filer
+
+```
+index.html          → selve appen
+config.js            → indstilling af baggrunds-push (server-URL + offentlig nøgle)
+manifest.json         → PWA-manifest (navn, ikoner, farver)
+service-worker.js     → offline-cache + modtagelse af push
+icon-192.png          → app-ikon
+icon-512.png          → app-ikon (stort)
+apple-touch-icon.png  → hjemmeskærms-ikon på iPhone
+server.js             → valgfri Node-server til baggrunds-notifikationer (ægte Web Push via VAPID)
+package.json          → afhængigheder til server.js
+env.example           → skabelon til .env med VAPID-nøgler (kopiér og udfyld selv, se ADVARSEL nedenfor)
+```
+
+---
+
+## 🚀 Sådan lægger du den på GitHub Pages
+
+1. Opret et nyt repository på GitHub, fx **`bloom`**.
+2. Upload **alle filerne ovenfor** til repo'et (træk-og-slip i browseren under *Add file → Upload files*, eller via `git`).
+3. Gå til **Settings → Pages**.
+4. Under *Build and deployment* → *Source*: vælg **Deploy from a branch**.
+5. Vælg branch **`main`** og mappe **`/ (root)`**, tryk **Save**.
+6. Efter ½–2 minutter er appen live på:
+   `https://<dit-brugernavn>.github.io/bloom/`
+
+> En PWA **kræver HTTPS** for at kunne installeres — det giver GitHub Pages automatisk. ✅
+
+### Via git (alternativ)
+```bash
+git init
+git add .
+git commit -m "Bloom PWA"
+git branch -M main
+git remote add origin https://github.com/<dit-brugernavn>/bloom.git
+git push -u origin main
+```
+
+---
+
+## 📲 Sådan installerer du den på iPhone-hjemmeskærmen
+
+1. Åbn linket (`https://<dit-brugernavn>.github.io/bloom/`) i **Safari** (skal være Safari på iOS).
+2. Tryk på **Del**-ikonet (firkanten med pil op).
+3. Vælg **"Føj til hjemmeskærm"**.
+4. Tryk **Tilføj**.
+
+Nu ligger Bloom som et app-ikon, åbner i fuldskærm uden browserlinje, og virker offline. 🎉
+
+---
+
+## 🔔 Om påmindelserne
+
+Påmindelser sættes under **Mig** → slå *Påmindelser* til og vælg tidspunkter for hvert punkt. Notifikationerne er **lokale på din enhed** — der sendes ingen persondata nogen steder.
+
+Der er to niveauer:
+
+**A) Uden server (standard)** — påmindelser vises pålideligt, mens appen har været åbnet for nylig. Ingen opsætning. Godt til at komme i gang.
+
+**B) Med baggrunds-push (valgfri)** — for at få påmindelser *også når appen er helt lukket*, kan du deploye den lille server (`server.js`) og udfylde `config.js`. Så bruger appen ægte Web Push.
+
+Kort sagt:
+1. Kopiér `env.example` til `.env` og udfyld dine **egne** VAPID-nøgler (generér med `npm run keys` — brug aldrig eksempel-nøglerne i produktion).
+2. Deploy serveren (fx på Render/Railway/Fly) med `npm install` + `npm start`, og sæt miljøvariablerne `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (og evt. `ALLOW_ORIGIN`).
+3. Skriv server-adressen + den offentlige nøgle i `config.js`.
+4. Slå påmindelser til i appen → den abonnerer automatisk, og du ser "🌙 Baggrunds-påmindelser er aktive".
+
+> På iOS virker baggrunds-push kun, når appen er **føjet til hjemmeskærmen** (iOS 16.4+).
+
+## 📊 Om historikken
+
+Under **Historik** kan du se 7/14/30 dage:
+- søjlediagram over dagligt væskeindtag,
+- kurve over din vægt,
+- et lille "varmekort" over hvor mange af dagens 5 punkter (3 måltider + 2 bevægelse) du klarede,
+- samt gennemsnit, stime og antal loggede dage.
+
+Alt beregnes ud fra de data, der allerede ligger lokalt i appen.
+
+---
+
+*Bloom giver generelle velvære- og fødevareforslag inspireret af cyklussens fire faser — ikke lægefaglige råd. Øvelserne er almene; efter fødsel kan mavemuskler være delt (diastase) og bækkenbunden svækket, så start blidt og få evt. et tjek hos fysioterapeut eller jordemoder. Mærker du markante forandringer, så tal med din læge.* 🌷
