@@ -88,8 +88,23 @@
   .ring small{font-size:9px;opacity:.8;letter-spacing:.08em;text-transform:uppercase;position:absolute;bottom:15px;color:#fff;}
   .phase-mid{display:flex;align-items:center;gap:16px;margin:16px 0 4px;position:relative;}
   .phase-desc{font-size:14px;line-height:1.5;color:rgba(255,255,255,.95);}
-  .setup-btn{margin-top:14px;width:100%;border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.15);color:#fff;padding:11px;border-radius:14px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;position:relative;}
+  .setup-btn{margin-top:10px;width:100%;border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.15);color:#fff;padding:11px;border-radius:14px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;position:relative;}
   .setup-btn:active{transform:scale(.98);background:rgba(255,255,255,.28);}
+  .cycle-stats{display:flex;gap:8px;margin:16px 0 4px;position:relative;}
+  .cycle-stat{flex:1;background:rgba(255,255,255,.14);border-radius:14px;padding:8px 4px;text-align:center;}
+  .cycle-stat b{display:block;font-family:'Fraunces',serif;font-size:16px;font-weight:600;color:#fff;line-height:1.15;}
+  .cycle-stat span{font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.75);font-weight:600;}
+  .period-btn{margin-top:14px;width:100%;border:none;background:#fff;color:var(--theme-deep);padding:13px;border-radius:14px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;position:relative;}
+  .period-btn:active{transform:scale(.98);}
+  .cyc-summary{display:flex;gap:8px;margin-bottom:12px;}
+  .cyc-sum-item{flex:1;background:var(--cream);border:1px solid var(--line);border-radius:14px;padding:10px 4px;text-align:center;}
+  .cyc-sum-item b{display:block;font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--theme-deep);transition:color .8s;}
+  .cyc-sum-item span{font-size:9.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .cyc-note{font-size:12.5px;color:var(--ink-soft);line-height:1.5;margin-bottom:14px;}
+  .cyc-list{margin-top:14px;display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;}
+  .cyc-list-item{display:flex;align-items:center;justify-content:space-between;font-size:13px;background:var(--cream);border:1px solid var(--line);border-radius:12px;padding:8px 10px;}
+  .cyc-list-item .len{color:var(--ink-soft);font-size:11.5px;margin-top:2px;}
+  .cyc-list-item button{border:none;background:none;color:#B65C4D;font-size:15px;cursor:pointer;padding:2px 8px;line-height:1;}
 
   /* Mad */
   .food-intro{font-size:14px;line-height:1.55;margin-bottom:14px;}
@@ -260,9 +275,15 @@
         </div>
         <div class="phase-mid">
           <div class="ring" id="ring"><b id="ringDay">–</b><small>dag</small></div>
-          <div class="phase-desc" id="phaseDesc">Tryk nedenfor og indtast første dag i din seneste menstruation, så regner appen ud, hvor du er — og hele appens farver skifter med din fase.</div>
+          <div class="phase-desc" id="phaseDesc">Tryk "Menstruation startet", når din blødning begynder, så regner appen ud, hvor du er — og hele appens farver skifter med din fase.</div>
         </div>
-        <button class="setup-btn" id="setupBtn">⚙︎ Indstil cyklus</button>
+        <div class="cycle-stats" id="cycleStats" hidden>
+          <div class="cycle-stat"><b id="lastCycleLen">–</b><span>Sidste cyklus</span></div>
+          <div class="cycle-stat"><b id="avgCycleLen">–</b><span>Gennemsnit</span></div>
+          <div class="cycle-stat"><b id="cycleVar">–</b><span>Variation</span></div>
+        </div>
+        <button class="period-btn" id="periodStartBtn">🩸 Menstruation startet</button>
+        <button class="setup-btn" id="setupBtn">⚙︎ Ret / tilføj dato</button>
       </div>
 
       <div class="card" id="foodCard">
@@ -362,7 +383,7 @@
 
     <!-- ============ VIEW: MIG / INDSTILLINGER ============ -->
     <div class="scroll view" id="view-me" hidden>
-      <h1 class="page-head">Mig & <em>påmindelser</em></h1>
+      <h1 class="page-head">Mig og <em>mine påmindelser</em></h1>
       <div class="page-sub">Indstil din cyklus og hvornår appen skal minde dig.</div>
 
       <div class="set-card">
@@ -383,10 +404,16 @@
         <div class="set-row"><div class="lbl">💧 Drik vand<small>Mindst hver gang</small></div><input type="time" data-rem="water" value="10:00"></div>
       </div>
 
-      <div class="set-card">
-        <div class="set-row"><div class="lbl">🌙 Seneste menstruation</div><input type="date" id="meStart"></div>
-        <div class="set-row"><div class="lbl">📅 Cykluslængde</div><input type="number" id="meLen" min="21" max="40" value="28"></div>
-        <button class="save-btn" id="meSaveCycle" style="margin-top:14px">Gem cyklus</button>
+      <div class="set-card" id="cycleHistCard">
+        <div class="cyc-summary">
+          <div class="cyc-sum-item"><b id="meLastLen">–</b><span>Sidste cyklus</span></div>
+          <div class="cyc-sum-item"><b id="meAvgLen">–</b><span>Gennemsnit</span></div>
+          <div class="cyc-sum-item"><b id="meVarLen">–</b><span>Variation</span></div>
+        </div>
+        <div class="cyc-note" id="cycNote"></div>
+        <div class="set-row"><div class="lbl">🩸 Tilføj / ret dato</div><input type="date" id="meAddDate"></div>
+        <button class="save-btn" id="meAddPeriod" style="margin-top:10px">Tilføj menstruationsstart</button>
+        <div class="cyc-list" id="cycList"></div>
       </div>
 
       <div class="set-card">
@@ -409,10 +436,9 @@
     <!-- MODAL -->
     <div class="modal-bg" id="modalBg">
       <div class="modal">
-        <h3>Indstil din cyklus</h3>
-        <p>Vi bruger kun datoen til at regne din fase ud. Alt gemmes lokalt på din enhed.</p>
-        <div class="field"><label>Første dag i seneste menstruation</label><input type="date" id="startInput"></div>
-        <div class="field"><label>Cykluslængde (dage)</label><input type="number" id="lenInput" min="21" max="40" value="28"></div>
+        <h3>Ret / tilføj menstruationsstart</h3>
+        <p>Cykluslængden regnes automatisk ud fra dine registreringer — du skal bare markere, hvornår en menstruation starter. Alt gemmes lokalt på din enhed.</p>
+        <div class="field"><label>Dato for menstruationsstart</label><input type="date" id="startInput"></div>
         <button class="save-btn" id="saveCycle">Gem</button>
       </div>
     </div>
@@ -483,22 +509,118 @@ const todayKey=()=> "bloom_"+new Date().toISOString().slice(0,10);
 /* ---- Tema ---- */
 function applyTheme(t){const r=document.documentElement.style;r.setProperty("--theme",t.theme);r.setProperty("--theme-deep",t.deep);r.setProperty("--theme-bg1",t.bg1);r.setProperty("--theme-bg2",t.bg2);r.setProperty("--theme-tint",t.tint);r.setProperty("--theme-soft",t.soft);}
 
-/* ---- Cyklus ---- */
+/* ---- Cyklus ----
+   Cyklus starter IKKE automatisk om igen efter et fast antal dage.
+   En ny cyklus tæller først fra den dag, du trykker "Menstruation startet"
+   (eller retter/tilføjer en dato manuelt). Cykluslængden bruges kun til at
+   estimere fase/farve og beregnes automatisk ud fra dine egne registreringer,
+   så den tilpasser sig hvis din cyklus varierer over tid. */
+function getPeriods(){try{const a=JSON.parse(store.get("bloom_periods")||"[]");return Array.isArray(a)?a:[];}catch(e){return [];}}
+function savePeriods(arr){const uniq=[...new Set(arr)].filter(Boolean).sort();store.set("bloom_periods",JSON.stringify(uniq));}
+function migrateLegacyCycle(){
+  if(getPeriods().length>0)return;
+  const legacy=store.get("bloom_start");
+  if(legacy)savePeriods([legacy]);
+}
+function cycleLengths(){
+  const p=getPeriods();const lens=[];
+  for(let i=1;i<p.length;i++){const d0=new Date(p[i-1]+"T00:00:00"),d1=new Date(p[i]+"T00:00:00");lens.push(Math.round((d1-d0)/86400000));}
+  return lens;
+}
+function lastCycleLength(){const l=cycleLengths();return l.length?l[l.length-1]:null;}
+function avgCycleLength(n=6){
+  const l=cycleLengths();
+  if(l.length===0)return parseInt(store.get("bloom_len")||"28",10);
+  const recent=l.slice(-n);
+  return Math.round(recent.reduce((a,b)=>a+b,0)/recent.length);
+}
+function cycleStdDev(n=6){
+  const l=cycleLengths().slice(-n);
+  if(l.length<2)return null;
+  const avg=l.reduce((a,b)=>a+b,0)/l.length;
+  const variance=l.reduce((a,b)=>a+Math.pow(b-avg,2),0)/l.length;
+  return Math.sqrt(variance);
+}
 function phaseFor(day,len){if(day<=5)return"winter";const ovu=len-14;if(day<ovu)return"spring";if(day<=ovu+1)return"summer";return"autumn";}
+
+function startNewPeriod(dateStr){
+  dateStr=dateStr||new Date().toISOString().slice(0,10);
+  const periods=getPeriods();
+  if(!periods.includes(dateStr))periods.push(dateStr);
+  savePeriods(periods);
+  renderCycle();
+}
+function removePeriod(dateStr){
+  savePeriods(getPeriods().filter(d=>d!==dateStr));
+  renderCycle();
+}
+
 function renderCycle(){
-  const start=store.get("bloom_start"); const len=parseInt(store.get("bloom_len")||"28",10);
-  if(!start){applyTheme(DEFAULT_THEME);return;}
+  migrateLegacyCycle();
+  const periods=getPeriods();
+  const start=periods.length?periods[periods.length-1]:null;
+  const len=avgCycleLength();
+  const statsEl=document.getElementById("cycleStats");
+  if(!start){
+    applyTheme(DEFAULT_THEME);
+    document.getElementById("phaseName").textContent="Sæt din cyklus op";
+    document.getElementById("phaseSeason").textContent="— indre årstid —";
+    document.getElementById("phaseEmoji").textContent="🌸";
+    document.getElementById("phaseDesc").textContent='Tryk "Menstruation startet", når din blødning begynder, så regner appen ud, hvor du er — og hele appens farver skifter med din fase.';
+    document.getElementById("ringDay").textContent="–";
+    document.getElementById("ring").style.setProperty("--p",0);
+    document.getElementById("foodIntro").textContent="Indstil din cyklus for at få fødevareforslag, der støtter din hormonbalance lige nu.";
+    document.getElementById("foodGrid").innerHTML="";
+    if(statsEl)statsEl.hidden=true;
+    renderMeCycle();
+    return;
+  }
   const d0=new Date(start+"T00:00:00"); const now=new Date();now.setHours(0,0,0,0);
-  let diff=Math.floor((now-d0)/86400000); let day=((diff%len)+len)%len+1;
+  const day=Math.floor((now-d0)/86400000)+1;
   const p=PHASES[phaseFor(day,len)]; applyTheme(p);
   document.getElementById("phaseName").textContent=p.name;
   document.getElementById("phaseSeason").textContent=p.season;
   document.getElementById("phaseEmoji").textContent=p.emoji;
-  document.getElementById("phaseDesc").textContent=p.desc;
+  let desc=p.desc;
+  if(day>len+3)desc+=` Din cyklus er nu ${day} dage — længere end dit gennemsnit på ${len}. Helt normalt ind imellem, men rart at holde øje med.`;
+  document.getElementById("phaseDesc").textContent=desc;
   document.getElementById("ringDay").textContent=day;
-  document.getElementById("ring").style.setProperty("--p",Math.round(day/len*100));
+  document.getElementById("ring").style.setProperty("--p",Math.min(100,Math.round(day/len*100)));
   document.getElementById("foodIntro").innerHTML=p.foodIntro;
   document.getElementById("foodGrid").innerHTML=p.foods.map(f=>`<div class="food-item"><div class="ic">${f.ic}</div><div class="txt"><b>${f.b}</b><span>${f.t}</span></div></div>`).join("");
+  if(statsEl){
+    const last=lastCycleLength();
+    document.getElementById("lastCycleLen").textContent=last?last+" d.":"–";
+    document.getElementById("avgCycleLen").textContent=periods.length>1?len+" d.":"–";
+    const sd=cycleStdDev();
+    document.getElementById("cycleVar").textContent=sd!==null?"±"+sd.toFixed(1):"–";
+    statsEl.hidden=periods.length<2;
+  }
+  renderMeCycle();
+}
+
+function renderMeCycle(){
+  const periods=getPeriods();
+  const lens=cycleLengths();
+  const last=lastCycleLength();
+  const avg=periods.length>1?avgCycleLength():null;
+  const sd=cycleStdDev();
+  const elLast=document.getElementById("meLastLen"),elAvg=document.getElementById("meAvgLen"),elVar=document.getElementById("meVarLen"),elNote=document.getElementById("cycNote"),elList=document.getElementById("cycList");
+  if(!elLast)return;
+  elLast.textContent=last?last+" dage":"–";
+  elAvg.textContent=avg?avg+" dage":"–";
+  elVar.textContent=sd!==null?"± "+sd.toFixed(1)+" dage":"–";
+  if(lens.length<3)elNote.textContent="Registrér et par cyklusser mere, så viser Bloom gennemsnit og variation over tid.";
+  else if(sd!==null&&sd>=7)elNote.textContent="Din cyklus varierer en del i øjeblikket (± "+sd.toFixed(1)+" dage). Det kan sagtens være helt normalt, men stigende uregelmæssighed kan også være et tidligt tegn på fx perimenopause — værd at nævne til din læge eller jordemoder, hvis du er nysgerrig.";
+  else elNote.textContent="Din cyklus har været nogenlunde regelmæssig i dine registreringer indtil videre.";
+  if(periods.length===0){elList.innerHTML="";return;}
+  const rows=[...periods].reverse().map((d,idx)=>{
+    const i=periods.length-1-idx;
+    const lenTxt=i>0?cycleLengths()[i-1]+" dage":"Første registrering";
+    const dateTxt=new Date(d+"T00:00:00").toLocaleDateString("da-DK",{day:"numeric",month:"short",year:"numeric"});
+    return `<div class="cyc-list-item"><div>${dateTxt}<div class="len">${lenTxt}</div></div><button data-del="${d}" aria-label="Slet registrering">✕</button></div>`;
+  }).join("");
+  elList.innerHTML=rows;
 }
 
 /* ---- Checklister ---- */
@@ -649,8 +771,7 @@ function updatePermNote(){const n=document.getElementById("permNote");
 function loadSettings(){
   document.getElementById("notifToggle").checked=store.get("bloom_notif")==="1";
   const times=getRemTimes();document.querySelectorAll("[data-rem]").forEach(inp=>{if(times[inp.dataset.rem])inp.value=times[inp.dataset.rem];});
-  const s=store.get("bloom_start");if(s)document.getElementById("meStart").value=s;
-  document.getElementById("meLen").value=store.get("bloom_len")||"28";
+  renderMeCycle();
   updatePermNote();updatePushNote();}
 document.getElementById("notifToggle").addEventListener("change",async e=>{
   if(e.target.checked){saveRemTimes();
@@ -664,15 +785,17 @@ document.getElementById("notifToggle").addEventListener("change",async e=>{
   updatePermNote();updatePushNote();});
 document.querySelectorAll("[data-rem]").forEach(inp=>inp.addEventListener("change",()=>{saveRemTimes();if(store.get("bloom_push")==="1")syncPushSubscription();}));
 function flashBtn(id,txt){const b=document.getElementById(id);const o=b.textContent;b.textContent=txt;setTimeout(()=>b.textContent=o,1500);}
-document.getElementById("meSaveCycle").onclick=()=>{const s=document.getElementById("meStart").value;const l=document.getElementById("meLen").value||"28";if(s){store.set("bloom_start",s);store.set("bloom_len",l);renderCycle();}flashBtn("meSaveCycle","Gemt ✓");};
+document.getElementById("meAddPeriod").onclick=()=>{const d=document.getElementById("meAddDate").value;if(d){startNewPeriod(d);document.getElementById("meAddDate").value="";flashBtn("meAddPeriod","Tilføjet ✓");}};
+document.getElementById("cycList").addEventListener("click",e=>{const b=e.target.closest("button[data-del]");if(!b)return;if(confirm("Slet denne registrering?"))removePeriod(b.dataset.del);});
 document.getElementById("testNotif").onclick=async()=>{if(!("Notification" in window))return;let perm=Notification.permission;if(perm==="default"){try{perm=await Notification.requestPermission();}catch(_){}}if(perm==="granted")fireNotif("Bloom 🌸","Sådan ser en påmindelse ud 🌷");updatePermNote();};
 document.getElementById("resetData").onclick=()=>{if(confirm("Slet alle dine data i Bloom? Dette kan ikke fortrydes.")){try{Object.keys(localStorage).filter(k=>k.indexOf("bloom")===0).forEach(k=>localStorage.removeItem(k));}catch(e){}location.reload();}};
 
 /* ---- Events ---- */
 const modalBg=document.getElementById("modalBg");
-document.getElementById("setupBtn").onclick=()=>{const s=store.get("bloom_start");if(s)document.getElementById("startInput").value=s;document.getElementById("lenInput").value=store.get("bloom_len")||"28";modalBg.classList.add("open");};
+document.getElementById("setupBtn").onclick=()=>{const periods=getPeriods();document.getElementById("startInput").value=periods.length?periods[periods.length-1]:"";modalBg.classList.add("open");};
 modalBg.onclick=e=>{if(e.target===modalBg)modalBg.classList.remove("open");};
-document.getElementById("saveCycle").onclick=()=>{const s=document.getElementById("startInput").value;const l=document.getElementById("lenInput").value||"28";if(s){store.set("bloom_start",s);store.set("bloom_len",l);}modalBg.classList.remove("open");renderCycle();};
+document.getElementById("saveCycle").onclick=()=>{const s=document.getElementById("startInput").value;if(s)startNewPeriod(s);modalBg.classList.remove("open");};
+document.getElementById("periodStartBtn").onclick=()=>{if(confirm("Registrér menstruationsstart i dag?"))startNewPeriod();};
 document.getElementById("waterAdd").onclick=()=>setWater(getWater()+1);
 document.getElementById("waterSub").onclick=()=>setWater(getWater()-1);
 document.getElementById("weightSave").onclick=saveWeight;
